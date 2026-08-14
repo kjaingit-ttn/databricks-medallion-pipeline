@@ -1,0 +1,14 @@
+This is a Databricks Medallion Architecture data pipeline (Bronze -> Silver -> Gold -> Dashboard)
+for an e-commerce sales dataset, built as part of an AI capability assessment.
+
+Stack: PySpark, Delta Lake, Databricks SQL, Python 3.10+.
+
+Rules:
+- Bronze layer must NEVER filter, clean, or drop rows. Raw ingestion only.
+- Silver layer must FLAG bad rows via boolean chk_* columns, never delete them.
+- Every Silver quality check must be independently testable.
+- Gold layer only reads rows where quality_check_result = 'PASS'.
+- All SQL must be written for Databricks SQL / Spark SQL syntax.
+- Prefer explicit schemas over inferSchema for CSV reads.
+- All code must include docstrings/comments explaining WHY, not just what.
+- Do not use any real customer PII - this uses synthetic/faked data only.
