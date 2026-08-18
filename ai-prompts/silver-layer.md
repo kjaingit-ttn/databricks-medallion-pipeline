@@ -76,3 +76,28 @@ After fixing, regenerate the Databricks-runnable version if needed, and append t
 - `ai-prompts/silver-layer.md` — this log entry
 
 **DATABRICKS USAGE:** Copy-paste the entire contents of `run_01_quality_completeness_databricks.py` into one notebook cell and run.
+
+---
+
+## Completion: Silver Completeness verified in Databricks
+
+**PROMPT SENT:** Silver Completeness check is fully verified in Databricks with exact matches:
+- chk_completeness_email: 50 failed / 10,010 total (expected 50) ✓
+- chk_completeness_customer_id: 100 failed / 100,020 total (expected 100) ✓
+- chk_completeness_product_id: 200 failed / 100,020 total (expected 200) ✓
+
+Append this verified completion to ai-prompts/silver-layer.md.
+
+**AI RESPONSE SUMMARY:** Appended verified Databricks completion record confirming all three completeness checks match expected intentional defect counts from the sample dataset.
+
+**VERIFIED RESULTS (Databricks):**
+
+| Check | Failed | Total rows | Expected failures | Status |
+|-------|-------:|-----------:|------------------:|--------|
+| `chk_completeness_email` | 50 | 10,010 | 50 | ✓ |
+| `chk_completeness_customer_id` | 100 | 100,020 | 100 | ✓ |
+| `chk_completeness_product_id` | 200 | 100,020 | 200 | ✓ |
+
+**FILES CREATED OR CHANGED:**
+
+- `ai-prompts/silver-layer.md` — this completion entry
