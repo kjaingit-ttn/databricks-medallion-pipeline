@@ -49,3 +49,42 @@ After installation, close and note that the terminal needs to be restarted for P
 | `install.ps1` via `irm ... \| iex` | 404 Not Found |
 | `winget install Databricks.DatabricksCLI` | Installed v1.12.1 |
 | `databricks -v` (after PATH refresh) | `Databricks CLI v1.12.1` |
+
+---
+
+## Prompt: Catalog setup and CSV upload complete
+
+**PROMPT SENT:** The Databricks catalog setup and CSV upload is complete:
+- Schema created: workspace.raw_landing
+- Volume created: workspace.raw_landing.landing_zone
+- All 3 CSVs uploaded successfully to /Volumes/workspace/raw_landing/landing_zone/
+  (customers.csv 715KB, orders.csv 5.82MB, products.csv 34.2KB)
+
+Update database/DATABRICKS_CLI_SETUP.md to document the final volume path used, and append a completion entry to ai-prompts/databricks-setup.md summarizing that the upload succeeded and listing the exact commands that were run (schemas create, volumes create, fs cp x3).
+
+**AI RESPONSE SUMMARY:** Documented the completed Unity Catalog landing zone in `database/DATABRICKS_CLI_SETUP.md`: schema `workspace.raw_landing`, volume `workspace.raw_landing.landing_zone`, volume path `/Volumes/workspace/raw_landing/landing_zone/`, and uploaded file sizes. Replaced the placeholder “Next steps” section with the schema/volume creation and three `fs cp` sync commands for repeatable re-uploads after local data regeneration.
+
+**FILES CREATED OR CHANGED:**
+
+- `database/DATABRICKS_CLI_SETUP.md` — added Unity Catalog landing zone section
+- `ai-prompts/databricks-setup.md` — appended this completion entry
+
+**COMMANDS RUN:**
+
+```powershell
+databricks schemas create raw_landing workspace
+
+databricks volumes create landing_zone workspace.raw_landing --volume-type MANAGED
+
+databricks fs cp data/customers.csv dbfs:/Volumes/workspace/raw_landing/landing_zone/customers.csv
+databricks fs cp data/orders.csv dbfs:/Volumes/workspace/raw_landing/landing_zone/orders.csv
+databricks fs cp data/products.csv dbfs:/Volumes/workspace/raw_landing/landing_zone/products.csv
+```
+
+**UPLOAD RESULT:**
+
+| File | Size | Status |
+|------|------|--------|
+| `customers.csv` | 715 KB | Uploaded |
+| `orders.csv` | 5.82 MB | Uploaded |
+| `products.csv` | 34.2 KB | Uploaded |

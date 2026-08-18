@@ -52,6 +52,38 @@ On this machine, after uninstalling pip `databricks-cli` and installing via WinG
 Databricks CLI v1.12.1
 ```
 
-## Next steps
+## Unity Catalog landing zone (completed)
 
-Configure authentication before syncing data (for example, `databricks auth login` or a profile in `~/.databrickscfg`). After configuration, use Unity Catalog volume commands or `databricks fs cp` to copy generated CSVs from `data/` to the target path used by Bronze ingestion. Document that sync command in the pipeline README or job config when the volume destination is finalized.
+Sample CSVs are stored in a Unity Catalog volume for Bronze ingestion.
+
+| Object | Full name |
+|--------|-----------|
+| Catalog | `workspace` |
+| Schema | `workspace.raw_landing` |
+| Volume | `workspace.raw_landing.landing_zone` |
+| Volume path | `/Volumes/workspace/raw_landing/landing_zone/` |
+
+### Uploaded files
+
+| File | Size | Volume path |
+|------|------|-------------|
+| `customers.csv` | 715 KB | `/Volumes/workspace/raw_landing/landing_zone/customers.csv` |
+| `orders.csv` | 5.82 MB | `/Volumes/workspace/raw_landing/landing_zone/orders.csv` |
+| `products.csv` | 34.2 KB | `/Volumes/workspace/raw_landing/landing_zone/products.csv` |
+
+### Commands used
+
+Run from the project root after `databricks auth login` (or with a configured profile). Create the schema and volume once, then re-run the `fs cp` commands whenever sample data is regenerated locally.
+
+```powershell
+databricks schemas create raw_landing workspace
+
+databricks volumes create landing_zone workspace.raw_landing --volume-type MANAGED
+
+databricks fs cp data/customers.csv dbfs:/Volumes/workspace/raw_landing/landing_zone/customers.csv
+databricks fs cp data/orders.csv dbfs:/Volumes/workspace/raw_landing/landing_zone/orders.csv
+databricks fs cp data/products.csv dbfs:/Volumes/workspace/raw_landing/landing_zone/products.csv
+```
+
+Bronze notebooks and jobs should read from `/Volumes/workspace/raw_landing/landing_zone/` (or the equivalent `dbfs:/Volumes/...` path).
+
