@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Bronze ingestion for customers.csv.
+"""Bronze ingestion for products.csv.
 
 Bronze lands source data exactly as read from the landing zone. We deliberately avoid
 casting, filtering, deduplication, or business rules here so every downstream layer can
@@ -18,21 +18,21 @@ from pyspark.sql.types import (
     StructType,
 )
 
-SOURCE_PATH = "/Volumes/workspace/raw_landing/landing_zone/customers.csv"
-TARGET_TABLE = "bronze.customers"
+SOURCE_PATH = "/Volumes/workspace/raw_landing/landing_zone/products.csv"
+TARGET_TABLE = "bronze.products"
 INGESTION_LOG_TABLE = "bronze.ingestion_log"
 BRONZE_SCHEMA = "bronze"
 
 # Explicit string schema: types are validated and cast in Silver, not at raw ingest.
-CUSTOMERS_SCHEMA = StructType(
+PRODUCTS_SCHEMA = StructType(
     [
-        StructField("customer_id", StringType(), nullable=True),
-        StructField("customer_name", StringType(), nullable=True),
-        StructField("email", StringType(), nullable=True),
-        StructField("country", StringType(), nullable=True),
-        StructField("signup_date", StringType(), nullable=True),
-        StructField("customer_segment", StringType(), nullable=True),
-        StructField("lifetime_value", StringType(), nullable=True),
+        StructField("product_id", StringType(), nullable=True),
+        StructField("product_name", StringType(), nullable=True),
+        StructField("category", StringType(), nullable=True),
+        StructField("price", StringType(), nullable=True),
+        StructField("cost", StringType(), nullable=True),
+        StructField("stock_quantity", StringType(), nullable=True),
+        StructField("reorder_level", StringType(), nullable=True),
     ]
 )
 
@@ -47,10 +47,10 @@ def ensure_bronze_schema(spark: SparkSession) -> None:
     spark.sql(f"CREATE SCHEMA IF NOT EXISTS {BRONZE_SCHEMA}")
 
 
-def read_customers_raw(spark: SparkSession, source_path: str) -> DataFrame:
+def read_products_raw(spark: SparkSession, source_path: str) -> DataFrame:
     """Read the landing-zone CSV with an explicit schema and no row-level transforms."""
     return (
-        spark.read.schema(CUSTOMERS_SCHEMA)
+        spark.read.schema(PRODUCTS_SCHEMA)
         .option("header", True)
         .option("mode", "PERMISSIVE")
         # Keep malformed rows instead of failing the job; Silver will flag them later.
@@ -62,13 +62,13 @@ def add_ingest_metadata(raw_df: DataFrame) -> DataFrame:
     """Attach lineage columns only; do not alter business column values."""
     # Unity Catalog blocks input_file_name() on Volume paths; _metadata.file_path is UC-safe.
     return raw_df.select(
-        *[col(field.name) for field in CUSTOMERS_SCHEMA.fields],
+        *[col(field.name) for field in PRODUCTS_SCHEMA.fields],
         current_timestamp().alias("_ingest_timestamp"),
         col("_metadata.file_path").alias("_source_file"),
     )
 
 
-def write_customers_bronze(ingest_df: DataFrame) -> None:
+def write_products_bronze(ingest_df: DataFrame) -> None:
     """Persist raw-as-landed rows to the managed Delta table."""
     (
         ingest_df.write.format("delta")
@@ -103,24 +103,23 @@ def append_ingestion_log(spark: SparkSession, row_count: int, source_path: str) 
     )
 
 
+def run_ingestion(spark: SparkSession) -> int:
+    """Ingest products from the landing zone; return the number of rows written."""
+    ensure_bronze_schema(spark)
+
+    raw_df = read_products_raw(spark, SOURCE_PATH)
+    ingest_df = add_ingest_metadata(raw_df)
+
+    row_count = ingest_df.count()
+    write_products_bronze(ingest_df)
+    append_ingestion_log(spark, row_count=row_count, source_path=SOURCE_PATH)
+    return row_count
+
+
 def main() -> None:
     spark = get_spark()
     row_count = run_ingestion(spark)
     print(f"Wrote {row_count:,} rows to {TARGET_TABLE} from {SOURCE_PATH}")
-
-
-def run_ingestion(spark: SparkSession) -> int:
-    """Ingest customers from the landing zone; return the number of rows written."""
-    ensure_bronze_schema(spark)
-
-    raw_df = read_customers_raw(spark, SOURCE_PATH)
-    ingest_df = add_ingest_metadata(raw_df)
-
-    # Count before write; Bronze must not drop rows, so this matches landed volume.
-    row_count = ingest_df.count()
-    write_customers_bronze(ingest_df)
-    append_ingestion_log(spark, row_count=row_count, source_path=SOURCE_PATH)
-    return row_count
 
 
 if __name__ == "__main__":
