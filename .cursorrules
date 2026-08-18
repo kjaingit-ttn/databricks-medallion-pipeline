@@ -12,3 +12,20 @@ Rules:
 - Prefer explicit schemas over inferSchema for CSV reads.
 - All code must include docstrings/comments explaining WHY, not just what.
 - Do not use any real customer PII - this uses synthetic/faked data only.
+
+## Prompt History Logging (ALWAYS APPLY)
+After completing ANY task in this project (writing code, editing docs, running commands, 
+fixing bugs), automatically log the interaction to the appropriate file in ai-prompts/:
+- Data generation work -> ai-prompts/data-generation.md
+- Documentation/requirements work -> ai-prompts/documentation.md
+- Bronze layer work -> ai-prompts/bronze-layer.md
+- Silver layer work -> ai-prompts/silver-layer.md
+- Gold layer work -> ai-prompts/gold-layer.md
+- Dashboard work -> ai-prompts/dashboard.md
+- Debugging/bug fixes -> ai-prompts/debugging.md
+- Databricks/infra setup -> ai-prompts/databricks-setup.md
+- Anything else -> ai-prompts/documentation.md
+
+Each log entry must include: the prompt sent (verbatim), a summary of what was done, and what 
+files were created or changed. Do this automatically without being asked each time, appending 
+to the relevant file rather than overwriting it.

@@ -56,3 +56,36 @@ Then, create a file ai-prompts/documentation.md (if it doesn't exist) and append
 2. **Duplicate `customer_id`:** Keep last-seen — newest row reflects current source state; Bronze retains all rows, Silver flags duplicates.
 3. **`payment_date` for non-Completed orders:** Not required — required only for `Completed`; null is valid for `Pending` / `Cancelled`.
 4. **`total_amount` mismatch:** Flag as Silver FAIL via `chk_total_amount_match` — no auto-correction; exclude from Gold until resolved.
+
+---
+
+## Prompt: Add prompt history logging rule to .cursorrules
+
+**PROMPT SENT:** Add a new section to .cursorrules with this exact rule:
+
+## Prompt History Logging (ALWAYS APPLY)
+After completing ANY task in this project (writing code, editing docs, running commands, 
+fixing bugs), automatically log the interaction to the appropriate file in ai-prompts/:
+- Data generation work -> ai-prompts/data-generation.md
+- Documentation/requirements work -> ai-prompts/documentation.md
+- Bronze layer work -> ai-prompts/bronze-layer.md
+- Silver layer work -> ai-prompts/silver-layer.md
+- Gold layer work -> ai-prompts/gold-layer.md
+- Dashboard work -> ai-prompts/dashboard.md
+- Debugging/bug fixes -> ai-prompts/debugging.md
+- Databricks/infra setup -> ai-prompts/databricks-setup.md
+- Anything else -> ai-prompts/documentation.md
+
+Each log entry must include: the prompt sent (verbatim), a summary of what was done, and what 
+files were created or changed. Do this automatically without being asked each time, appending 
+to the relevant file rather than overwriting it.
+
+Confirm this rule has been added by showing me the updated .cursorrules file.
+
+**AI RESPONSE SUMMARY:** Appended the **Prompt History Logging (ALWAYS APPLY)** section to `.cursorrules` verbatim, mapping task types to `ai-prompts/` log files and requiring automatic append-only entries with prompt, summary, and changed files.
+
+**FILES CREATED OR CHANGED:**
+
+- `.cursorrules` — added Prompt History Logging section
+- `ai-prompts/documentation.md` — appended this log entry
+
