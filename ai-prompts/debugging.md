@@ -23,3 +23,35 @@ After fixing, create debugging-notes.md at the repo root (if it doesn't exist) a
 - `src/bronze/01_ingest_customers.py` — UC-safe `_source_file` via `_metadata.file_path`
 - `debugging-notes.md` — debugging entry for this issue
 - `ai-prompts/debugging.md` — created; this log entry
+
+---
+
+## Prompt: Fix `__file__` NameError in Silver completeness runner
+
+**PROMPT SENT:** When running the Silver completeness check on Databricks, I hit this error: NameError: name '__file__' is not defined. Fix Silver completeness code to remove `__file__` dependency; update debugging-notes.md and log in ai-prompts/silver-layer.md.
+
+**AI RESPONSE SUMMARY:** Moved verification into `01_quality_completeness.py`; rewrote runner to use `runpy.run_path("src/silver/01_quality_completeness.py")` without `__file__`. Appended debugging entry to `debugging-notes.md`.
+
+**FILES CREATED OR CHANGED:**
+
+- `src/silver/01_quality_completeness.py`
+- `src/silver/run_01_quality_completeness_databricks.py`
+- `debugging-notes.md`
+- `ai-prompts/silver-layer.md`
+- `ai-prompts/debugging.md` — this log entry
+
+---
+
+## Prompt: Self-contained Databricks runner (FileNotFoundError)
+
+**PROMPT SENT:** Silver completeness Databricks runner fails with FileNotFoundError because runpy cannot find sibling `01_quality_completeness.py` in Workspace. Fix by making runner fully self-contained; add .cursorrules rule; log in debugging-notes.md and silver-layer.md.
+
+**AI RESPONSE SUMMARY:** Inlined all logic into `run_01_quality_completeness_databricks.py`; removed runpy. Added `.cursorrules` Databricks runner rule and debugging-notes entry.
+
+**FILES CREATED OR CHANGED:**
+
+- `src/silver/run_01_quality_completeness_databricks.py`
+- `.cursorrules`
+- `debugging-notes.md`
+- `ai-prompts/silver-layer.md`
+- `ai-prompts/debugging.md` — this log entry

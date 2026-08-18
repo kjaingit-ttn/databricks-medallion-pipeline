@@ -29,3 +29,9 @@ fixing bugs), automatically log the interaction to the appropriate file in ai-pr
 Each log entry must include: the prompt sent (verbatim), a summary of what was done, and what 
 files were created or changed. Do this automatically without being asked each time, appending 
 to the relevant file rather than overwriting it.
+
+## Databricks notebook runners (ALWAYS APPLY)
+Databricks notebook runner scripts must be fully self-contained single files - never use runpy
+or relative path imports to load sibling files, since only the pasted file exists in the
+Databricks workspace. Inline all logic in the `*_databricks.py` runner; keep the modular
+`.py` sibling in git for local development and tests.
