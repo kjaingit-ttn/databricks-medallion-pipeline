@@ -92,3 +92,37 @@ Regenerated `run_01_quality_completeness_databricks.py` as a **fully self-contai
 
 Added a `.cursorrules` rule: Databricks notebook runners must always follow this self-contained pattern.
 
+---
+
+## Silver uniqueness: persistent VIEW cannot reference temp VIEW
+
+**Issue**
+
+Running the Silver uniqueness runner on Databricks failed with:
+
+```
+[INVALID_TEMP_OBJ_REFERENCE] Cannot create the persistent object `workspace`.`silver`.
+`customers_canonical` of the type VIEW because it references to the temporary object
+`silver_customers_canonical__tmp` of the type VIEW. SQLSTATE: 42K0F
+```
+
+**Root Cause**
+
+Both uniqueness scripts built canonical datasets using `createOrReplaceTempView(...)`, then attempted `CREATE OR REPLACE VIEW silver.<...> AS SELECT * FROM <temp_view>`. Databricks disallows persistent objects that depend on temporary objects because temp views are session-scoped and disappear after execution.
+
+**Fix**
+
+Replaced canonical VIEW creation with materialized Delta TABLE writes in both:
+
+- `src/silver/02_quality_uniqueness.py`
+- `src/silver/run_02_quality_uniqueness_databricks.py`
+
+Canonical outputs are now written directly via:
+
+```python
+df.write.format("delta").mode("overwrite").saveAsTable("silver.customers_canonical")
+df.write.format("delta").mode("overwrite").saveAsTable("silver.orders_canonical")
+```
+
+This resolves the temp-object dependency error and improves Gold-layer performance by avoiding repeated dedup recomputation at query time.
+

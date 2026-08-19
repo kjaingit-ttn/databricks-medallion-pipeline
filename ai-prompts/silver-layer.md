@@ -101,3 +101,74 @@ Append this verified completion to ai-prompts/silver-layer.md.
 **FILES CREATED OR CHANGED:**
 
 - `ai-prompts/silver-layer.md` — this completion entry
+
+---
+
+## Prompt: Uniqueness quality check (self-contained Databricks runner + reusable module)
+
+**PROMPT SENT:** Create a fully self-contained Databricks notebook script at src/silver/run_02_quality_uniqueness_databricks.py implementing the Uniqueness quality check.
+
+IMPORTANT: This must be a single self-contained file with all logic inlined - no runpy, no dynamic loading of sibling files, since only this one file will be pasted into a Databricks notebook (per the rule we added to .cursorrules).
+
+Requirements:
+- Read from bronze.customers and bronze.orders
+- Flag duplicate customer_id in customers as chk_uniqueness_customer_id (boolean) - use a window function to count occurrences per customer_id; True if count == 1, False if count > 1
+- Flag duplicate order_id in orders as chk_uniqueness_order_id, same approach
+- Do NOT drop any rows - only add the boolean flag columns
+- Also create a "canonical" deduplicated view for each (first-seen by _ingest_timestamp wins) that keeps only ONE row per duplicate key - this will be used later by Gold to avoid double-counting revenue from duplicate rows
+- Print a report: total rows, distinct keys, duplicate rows, pct unique, for both tables
+- We expect exactly 10 duplicate customer_id rows (10 extra rows beyond distinct count) and 20 duplicate order_id rows - verify these exact counts in the printed report
+
+Also create a plain (non-Databricks-runner) version at src/silver/02_quality_uniqueness.py with the same logic, structured as reusable functions (for use later when we build the final create_silver_tables.py orchestrator).
+
+Log this in ai-prompts/silver-layer.md.
+
+**AI RESPONSE SUMMARY:** Added reusable module `src/silver/02_quality_uniqueness.py` and fully self-contained Databricks runner `src/silver/run_02_quality_uniqueness_databricks.py`. Both read from `bronze.customers` and `bronze.orders`, add window-based uniqueness flags (`chk_uniqueness_customer_id`, `chk_uniqueness_order_id`) without dropping rows, build canonical deduplicated views (`silver.customers_canonical`, `silver.orders_canonical`) using first-seen `_ingest_timestamp` ordering, print uniqueness reports (total rows, distinct keys, duplicate rows, pct unique), and verify expected duplicate rows (`customers=10`, `orders=20`) with explicit OK/MISMATCH output.
+
+**FILES CREATED OR CHANGED:**
+
+- `src/silver/02_quality_uniqueness.py` — reusable uniqueness-check functions
+- `src/silver/run_02_quality_uniqueness_databricks.py` — fully self-contained Databricks notebook script
+- `ai-prompts/silver-layer.md` — this log entry
+
+---
+
+## Prompt: Fix uniqueness canonical outputs (VIEW -> TABLE)
+
+**PROMPT SENT:** The Silver uniqueness runner fails with `[INVALID_TEMP_OBJ_REFERENCE]` because a persistent view (`silver.customers_canonical`) was being created from a temporary view. Fix both uniqueness scripts to materialize canonical outputs as Delta tables (`saveAsTable`) named `silver.customers_canonical` and `silver.orders_canonical`, and log the fix.
+
+**AI RESPONSE SUMMARY:** Updated both `src/silver/02_quality_uniqueness.py` and `src/silver/run_02_quality_uniqueness_databricks.py` to remove temp-view-based canonical view creation. Canonical deduplicated datasets are now written as managed Delta tables using `write.format("delta").mode("overwrite").saveAsTable(...)`. Updated status prints to report rows written to canonical tables.
+
+**FILES CREATED OR CHANGED:**
+
+- `src/silver/02_quality_uniqueness.py` — canonical outputs changed from views to Delta tables
+- `src/silver/run_02_quality_uniqueness_databricks.py` — same fix in self-contained Databricks runner
+- `debugging-notes.md` — Issue / Root Cause / Fix entry for INVALID_TEMP_OBJ_REFERENCE
+- `ai-prompts/silver-layer.md` — this log entry
+
+---
+
+## Completion: Silver Uniqueness verified in Databricks
+
+**PROMPT SENT:** Silver Uniqueness check is fully verified in Databricks:
+- customers.customer_id: 10 duplicate rows (expected 10) ✓
+- orders.order_id: 20 duplicate rows (expected 20) ✓
+- Tables written: silver.customers_uniqueness, silver.orders_uniqueness, 
+  silver.customers_canonical (10,000 rows), silver.orders_canonical (100,000 rows)
+
+Append this verified completion to ai-prompts/silver-layer.md.
+
+**AI RESPONSE SUMMARY:** Appended verified Databricks completion record confirming uniqueness checks matched expected duplicate-row counts and canonical table row counts.
+
+**VERIFIED RESULTS (Databricks):**
+
+| Check / Output | Result | Expected | Status |
+|----------------|-------:|---------:|--------|
+| `customers.customer_id` duplicate rows | 10 | 10 | ✓ |
+| `orders.order_id` duplicate rows | 20 | 20 | ✓ |
+| `silver.customers_canonical` rows | 10,000 | 10,000 | ✓ |
+| `silver.orders_canonical` rows | 100,000 | 100,000 | ✓ |
+
+**FILES CREATED OR CHANGED:**
+
+- `ai-prompts/silver-layer.md` — this completion entry
