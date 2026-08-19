@@ -104,6 +104,58 @@ Append this verified completion to ai-prompts/silver-layer.md.
 
 ---
 
+## Prompt: Referential integrity quality check (self-contained Databricks runner + reusable module)
+
+**PROMPT SENT:** Create a fully self-contained Databricks notebook script at src/silver/run_04_quality_referential_integrity_databricks.py implementing the Referential Integrity quality check. Single file, no runpy, no sibling-file dependency, no temp-view-backed persistent views (write materialized Delta tables, not views, per our earlier fix).
+
+Requirements:
+- Read from bronze.orders, bronze.customers, bronze.products
+- Flag orders where customer_id is non-null but does NOT exist in customers as chk_ref_customer_exists (boolean) - NULL customer_id should be treated as True here since that's already caught by the completeness check, not this one
+- Flag orders where product_id is non-null but does NOT exist in products as chk_ref_product_exists, same NULL-handling rule
+- Do NOT drop any rows - only add boolean flag columns
+- Print a report: total rows, passed, failed, pct passed for each check
+- We expect exactly 50 orphaned customer_id and 30 orphaned product_id rows - verify these exact counts in the printed report
+- Write the flagged result to silver.orders_referential_integrity
+
+Also create the plain reusable version at src/silver/04_quality_referential_integrity.py.
+
+Log this in ai-prompts/silver-layer.md.
+
+**AI RESPONSE SUMMARY:** Added reusable module `src/silver/04_quality_referential_integrity.py` and fully self-contained Databricks runner `src/silver/run_04_quality_referential_integrity_databricks.py`. Both read Bronze orders/customers/products, build distinct customer/product lookup datasets, and flag `chk_ref_customer_exists` / `chk_ref_product_exists` as True when FK is blank/null (delegated to completeness) or when a non-blank FK exists in lookup; False only for non-blank orphan references. Both scripts keep all rows, print pass/fail reports with percent passed, verify expected orphan failures (`50` customer, `30` product), and materialize output as Delta table `silver.orders_referential_integrity`.
+
+**FILES CREATED OR CHANGED:**
+
+- `src/silver/04_quality_referential_integrity.py` — reusable referential-integrity logic
+- `src/silver/run_04_quality_referential_integrity_databricks.py` — fully self-contained Databricks notebook script
+- `ai-prompts/silver-layer.md` — this log entry
+
+---
+
+## Completion: Silver Referential Integrity verified in Databricks
+
+**PROMPT SENT:** Silver Referential Integrity check is fully verified in Databricks:
+- chk_ref_customer_exists: 50 failed / 100,020 total (expected 50) ✓
+- chk_ref_product_exists: 30 failed / 100,020 total (expected 30) ✓
+- Table written: silver.orders_referential_integrity
+
+Append this verified completion to ai-prompts/silver-layer.md.
+
+**AI RESPONSE SUMMARY:** Appended verified Databricks completion record confirming both referential-integrity checks matched expected orphan counts and the target Silver table was written.
+
+**VERIFIED RESULTS (Databricks):**
+
+| Check / Output | Failed | Total rows | Expected failures | Status |
+|----------------|------:|-----------:|------------------:|--------|
+| `chk_ref_customer_exists` | 50 | 100,020 | 50 | ✓ |
+| `chk_ref_product_exists` | 30 | 100,020 | 30 | ✓ |
+| `silver.orders_referential_integrity` | — | written | — | ✓ |
+
+**FILES CREATED OR CHANGED:**
+
+- `ai-prompts/silver-layer.md` — this completion entry
+
+---
+
 ## Prompt: Uniqueness quality check (self-contained Databricks runner + reusable module)
 
 **PROMPT SENT:** Create a fully self-contained Databricks notebook script at src/silver/run_02_quality_uniqueness_databricks.py implementing the Uniqueness quality check.
