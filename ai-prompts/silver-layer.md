@@ -104,6 +104,69 @@ Append this verified completion to ai-prompts/silver-layer.md.
 
 ---
 
+## Prompt: Business logic quality check (self-contained Databricks runner + reusable module)
+
+**PROMPT SENT:** Create a fully self-contained Databricks notebook script at src/silver/run_05_quality_business_logic_databricks.py implementing Business Logic validation - the 4th required quality check, this one domain-specific rather than matching a pre-seeded defect count. Single file, no runpy, no sibling-file dependency, materialized Delta tables only.
+
+Requirements - read from bronze.orders, bronze.customers, bronze.products and flag:
+1. chk_biz_amount_consistency: total_amount must equal quantity * unit_price (within 0.01 tolerance for rounding) - flag False if mismatched
+2. chk_biz_completed_has_payment: if order_status == 'Completed', payment_date must NOT be null - flag False if violated
+3. chk_biz_positive_quantity: quantity must be > 0 - flag False if violated
+4. chk_biz_signup_not_future: customers.signup_date must not be after today's date - flag False if violated
+
+Do NOT drop any rows - only flag. Print a report: total rows, passed, failed, pct passed, for each of the 4 checks. Write orders results to silver.orders_business_logic and customers results to silver.customers_business_logic.
+
+Also create the plain reusable version at src/silver/05_quality_business_logic.py.
+
+Log this in ai-prompts/silver-layer.md.
+
+**AI RESPONSE SUMMARY:** Added reusable module `src/silver/05_quality_business_logic.py` and fully self-contained Databricks runner `src/silver/run_05_quality_business_logic_databricks.py`. Both read Bronze orders/customers/products and add four business-rule flags without dropping rows: amount consistency with 0.01 tolerance, Completed-order payment-date requirement, positive quantity check, and non-future signup date check. Both scripts print per-check pass/fail/percent reports and materialize outputs as Delta tables `silver.orders_business_logic` and `silver.customers_business_logic`.
+
+**FILES CREATED OR CHANGED:**
+
+- `src/silver/05_quality_business_logic.py` — reusable business-logic quality checks
+- `src/silver/run_05_quality_business_logic_databricks.py` — fully self-contained Databricks notebook script
+- `ai-prompts/silver-layer.md` — this log entry
+
+---
+
+## Completion: Silver Business Logic verified in Databricks
+
+**PROMPT SENT:** Silver Business Logic check is fully verified in Databricks - all checks passed at 100%, confirming the generator produces internally consistent data:
+- chk_biz_amount_consistency: 0 failed / 100,020 (100% passed)
+- chk_biz_completed_has_payment: 0 failed / 100,020 (100% passed)
+- chk_biz_positive_quantity: 0 failed / 100,020 (100% passed)
+- chk_biz_signup_not_future: verified (customers table)
+- Tables written: silver.orders_business_logic, silver.customers_business_logic
+
+Append this verified completion to ai-prompts/silver-layer.md. This completes all 4 required Silver quality checks: Completeness, Uniqueness, Referential Integrity, Business Logic.
+
+**AI RESPONSE SUMMARY:** Appended verified Databricks completion record confirming all business-logic checks passed and both Silver business-logic tables were written. Marked Silver quality-check coverage as complete across all four required categories.
+
+**VERIFIED RESULTS (Databricks):**
+
+| Check / Output | Failed | Total rows | Pass rate | Status |
+|----------------|------:|-----------:|----------:|--------|
+| `chk_biz_amount_consistency` | 0 | 100,020 | 100% | ✓ |
+| `chk_biz_completed_has_payment` | 0 | 100,020 | 100% | ✓ |
+| `chk_biz_positive_quantity` | 0 | 100,020 | 100% | ✓ |
+| `chk_biz_signup_not_future` | 0 | customers table | 100% | ✓ |
+| `silver.orders_business_logic` | — | written | — | ✓ |
+| `silver.customers_business_logic` | — | written | — | ✓ |
+
+**SILVER QUALITY CHECK STATUS:**
+
+- Completeness — complete ✓
+- Uniqueness — complete ✓
+- Referential Integrity — complete ✓
+- Business Logic — complete ✓
+
+**FILES CREATED OR CHANGED:**
+
+- `ai-prompts/silver-layer.md` — this completion entry
+
+---
+
 ## Prompt: Referential integrity quality check (self-contained Databricks runner + reusable module)
 
 **PROMPT SENT:** Create a fully self-contained Databricks notebook script at src/silver/run_04_quality_referential_integrity_databricks.py implementing the Referential Integrity quality check. Single file, no runpy, no sibling-file dependency, no temp-view-backed persistent views (write materialized Delta tables, not views, per our earlier fix).
