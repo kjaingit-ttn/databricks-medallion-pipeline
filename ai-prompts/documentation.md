@@ -89,3 +89,32 @@ Confirm this rule has been added by showing me the updated .cursorrules file.
 - `.cursorrules` — added Prompt History Logging section
 - `ai-prompts/documentation.md` — appended this log entry
 
+---
+
+## Prompt: Create database/ folder documentation (schema, seed data, setup)
+
+**PROMPT SENT:** The database/ folder is missing required files per the assignment's repo structure. Create:
+
+1. database/schema.sql - DDL matching what we've actually built:
+   - CREATE SCHEMA statements for bronze, silver, gold
+   - bronze.ingestion_log table definition
+   - silver.data_quality_report table definition
+   - Brief comments noting that bronze.customers/orders/products and silver.customers/orders/products are created dynamically by the PySpark scripts (schema evolves with source data), not hardcoded here
+
+2. database/seed-data-notes.md - summary of the 3 seed CSVs: exact row counts (customers 10,010, orders 100,020, products 500), and the exact intentional data quality issues injected (50 null emails, 10 duplicate customers, 100 null customer_id, 200 null product_id, 50 orphan customer_id, 30 orphan product_id, 20 duplicate order_id) - consistent with src/data_generation/DATA_GENERATION_NOTES.md
+
+3. database/setup-notes.md - step by step setup instructions from scratch: install dependencies, generate sample data, run tests locally, upload to Databricks volume (databricks fs cp commands), run Bronze notebooks in order, run Silver notebooks in order
+
+Base all of this on what we've actually built and verified so far - do not invent numbers or steps that don't match our real implementation.
+
+Log this in ai-prompts/documentation.md.
+
+**AI RESPONSE SUMMARY:** Created three database documentation files grounded in verified implementation: `database/schema.sql` (CREATE SCHEMA for bronze/silver/gold; Delta DDL for `bronze.ingestion_log` and `silver.data_quality_report` matching PySpark StructType/columns; comments documenting dynamic creation of entity tables and verified Bronze row counts); `database/seed-data-notes.md` (exact CSV row counts, defect table aligned with `generate_sample_data.py` constants and Silver verification, note that business-logic and product defects are zero); `database/setup-notes.md` (end-to-end setup from `pip install -r requirements-dev.txt` through `pytest -v`, Databricks CLI/volume upload commands from `DATABRICKS_CLI_SETUP.md`, Bronze ingest order 01→02→03 with verified counts, Silver `run_*_databricks.py` order 01→02→04→05→create_silver_tables, Gold marked pending).
+
+**FILES CREATED OR CHANGED:**
+
+- `database/schema.sql` — schema and static table DDL
+- `database/seed-data-notes.md` — seed CSV and defect summary
+- `database/setup-notes.md` — full setup runbook
+- `ai-prompts/documentation.md` — appended this log entry
+
