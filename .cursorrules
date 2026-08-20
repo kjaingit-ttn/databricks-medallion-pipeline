@@ -35,3 +35,9 @@ Databricks notebook runner scripts must be fully self-contained single files - n
 or relative path imports to load sibling files, since only the pasted file exists in the
 Databricks workspace. Inline all logic in the `*_databricks.py` runner; keep the modular
 `.py` sibling in git for local development and tests.
+
+## Local PySpark development (ALWAYS APPLY)
+Development pattern - write and test all Spark logic locally first using pyspark installed via pip,
+reading from local data/ folder. Only after local testing passes, adapt and run the proven logic
+once in Databricks (Unity Catalog paths, _metadata.file_path, saveAsTable) for the official
+validated run.

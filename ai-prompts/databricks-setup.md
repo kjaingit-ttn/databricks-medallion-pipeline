@@ -88,3 +88,38 @@ databricks fs cp data/products.csv dbfs:/Volumes/workspace/raw_landing/landing_z
 | `customers.csv` | 715 KB | Uploaded |
 | `orders.csv` | 5.82 MB | Uploaded |
 | `products.csv` | 34.2 KB | Uploaded |
+
+---
+
+## Prompt: Install PySpark locally for iterative Spark testing
+
+**PROMPT SENT:** Install pyspark locally so I can test Spark scripts without needing Databricks for every iteration: pip install pyspark==3.5.1
+
+Verify by running a simple local test: create a SparkSession, read data/customers.csv with an explicit schema (all StringType), print the row count. It should print 10010.
+
+Note for future scripts: local PySpark scripts should read directly from the local data/ folder (not /Volumes/workspace/...), and should NOT use Databricks-only features like Unity Catalog 3-level table names, _metadata.file_path (use input_file_name() locally instead, since Unity Catalog restrictions don't apply locally), or serverless-specific syntax.
+
+Log this in ai-prompts/databricks-setup.md, and add this note to .cursorrules: "Development pattern - write and test all Spark logic locally first using pyspark installed via pip, reading from local data/ folder. Only after local testing passes, adapt and run the proven logic once in Databricks (Unity Catalog paths, _metadata.file_path, saveAsTable) for the official validated run."
+
+**AI RESPONSE SUMMARY:** Installed `pyspark==3.5.1` (and dependency `py4j==0.10.9.7`) via pip. Added `pyspark==3.5.1` to `requirements-dev.txt`. Appended the local-first development pattern to `.cursorrules`. Ran a local verification: `SparkSession` with explicit all-`StringType` schema reading `data/customers.csv` printed row count **10010** as expected. Documented local vs Databricks differences (local `data/` paths, `input_file_name()` vs `_metadata.file_path`, no UC table names).
+
+**KEY OUTCOMES:**
+
+| Step | Result |
+|------|--------|
+| `pip install pyspark==3.5.1` | Installed successfully |
+| Local SparkSession + `data/customers.csv` | Row count **10010** |
+| `requirements-dev.txt` | Added `pyspark==3.5.1` |
+| `.cursorrules` | Added local PySpark development pattern |
+| `ai-prompts/databricks-setup.md` | Logged this prompt |
+
+**LOCAL VS DATABRICKS NOTES:**
+
+| Concern | Local PySpark | Databricks |
+|---------|---------------|------------|
+| CSV paths | `data/customers.csv` | `/Volumes/workspace/raw_landing/landing_zone/...` |
+| Source file column | `input_file_name()` | `col("_metadata.file_path")` |
+| Table writes | DataFrame actions / local paths | `saveAsTable`, Unity Catalog 3-level names |
+| Workflow | Test logic locally first | Official validated run after local pass |
+
+**Files changed:** `requirements-dev.txt`, `.cursorrules`, `ai-prompts/databricks-setup.md`

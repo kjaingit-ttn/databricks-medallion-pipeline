@@ -130,6 +130,39 @@ Log this in ai-prompts/silver-layer.md.
 
 ---
 
+## Prompt: Create final Silver tables orchestrator (self-contained Databricks runner + reusable module)
+
+**PROMPT SENT:** Create a fully self-contained Databricks notebook script at src/silver/run_create_silver_tables_databricks.py that orchestrates all 4 Silver quality checks into final tables. Single file, no runpy, no sibling-file dependency, materialized Delta tables only (not views).
+
+Requirements:
+- Read from bronze.customers, bronze.orders, bronze.products
+- Apply ALL relevant checks inline (reuse the same logic we already validated):
+  customers: chk_completeness_email, chk_uniqueness_customer_id, chk_biz_signup_not_future
+  orders: chk_completeness_customer_id, chk_completeness_product_id, chk_uniqueness_order_id, 
+          chk_ref_customer_exists, chk_ref_product_exists, chk_biz_amount_consistency, 
+          chk_biz_completed_has_payment, chk_biz_positive_quantity
+  products: no known issues, but still add chk_biz_positive_price 
+          (price > 0 and cost > 0) as a sanity check
+- Add a final column quality_check_result = 'PASS' if ALL relevant chk_* columns for that row are True, else 'FAIL'
+- Do NOT drop any rows - write ALL rows (both PASS and FAIL) to silver.customers, silver.orders, silver.products - this lets Gold layer decide what to filter
+- Then build silver.data_quality_report: one row per table (customers, orders, products) with columns table_name, total_rows, passed_rows, failed_rows, pct_passed, generated_at
+- Print the final data_quality_report as a summary table at the end
+- We expect roughly: customers ~99.4% pass rate (50 email + 10 duplicate + any signup issues out of 10,010), orders ~99.7% pass rate (very few total failures since checks mostly don't overlap on the same rows, out of 100,020), products ~100% pass rate
+
+Also create the plain reusable version at src/silver/create_silver_tables.py.
+
+Log this in ai-prompts/silver-layer.md.
+
+**AI RESPONSE SUMMARY:** Added reusable orchestrator `src/silver/create_silver_tables.py` and fully self-contained Databricks runner `src/silver/run_create_silver_tables_databricks.py`. Both scripts read Bronze customers/orders/products, apply all required Completeness/Uniqueness/Referential/Business checks inline, derive row-level `quality_check_result` (`PASS`/`FAIL`), and write full-row outputs (including failed rows) to `silver.customers`, `silver.orders`, and `silver.products`. Both build and materialize `silver.data_quality_report` with `table_name`, `total_rows`, `passed_rows`, `failed_rows`, `pct_passed`, `generated_at`, and print the report at the end.
+
+**FILES CREATED OR CHANGED:**
+
+- `src/silver/create_silver_tables.py` — reusable final Silver-table orchestrator
+- `src/silver/run_create_silver_tables_databricks.py` — fully self-contained Databricks notebook orchestrator
+- `ai-prompts/silver-layer.md` — this log entry
+
+---
+
 ## Completion: Silver Business Logic verified in Databricks
 
 **PROMPT SENT:** Silver Business Logic check is fully verified in Databricks - all checks passed at 100%, confirming the generator produces internally consistent data:

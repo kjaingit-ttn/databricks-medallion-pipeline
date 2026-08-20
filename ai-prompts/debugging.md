@@ -55,3 +55,18 @@ After fixing, create debugging-notes.md at the repo root (if it doesn't exist) a
 - `debugging-notes.md`
 - `ai-prompts/silver-layer.md`
 - `ai-prompts/debugging.md` — this log entry
+
+---
+
+## Prompt: Fix Delta metadata mismatch in Silver orchestrator
+
+**PROMPT SENT:** Fix `[DELTA_METADATA_MISMATCH]` when running `run_create_silver_tables_databricks.py` by adding `overwriteSchema=true` on Delta overwrites and `DROP TABLE IF EXISTS` for final Silver tables at script start. Log in debugging-notes.md.
+
+**AI RESPONSE SUMMARY:** Added `drop_silver_output_tables()` and `.option("overwriteSchema", "true")` to both `run_create_silver_tables_databricks.py` and `create_silver_tables.py`. Documented Issue / Root Cause / Fix in `debugging-notes.md`.
+
+**FILES CREATED OR CHANGED:**
+
+- `src/silver/run_create_silver_tables_databricks.py`
+- `src/silver/create_silver_tables.py`
+- `debugging-notes.md`
+- `ai-prompts/debugging.md` — this log entry

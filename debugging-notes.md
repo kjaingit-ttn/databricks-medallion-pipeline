@@ -126,3 +126,37 @@ df.write.format("delta").mode("overwrite").saveAsTable("silver.orders_canonical"
 
 This resolves the temp-object dependency error and improves Gold-layer performance by avoiding repeated dedup recomputation at query time.
 
+---
+
+## Silver orchestrator: Delta metadata mismatch on overwrite
+
+**Issue**
+
+Running `run_create_silver_tables_databricks.py` on Databricks failed with:
+
+```
+[DELTA_METADATA_MISMATCH] A metadata mismatch was detected when writing to the Delta table.
+```
+
+**Root Cause**
+
+`silver.customers`, `silver.orders`, and `silver.products` may already exist from a previous partial run with a different schema (for example, earlier completeness-only writes without the full `chk_*` and `quality_check_result` columns). Delta `mode("overwrite")` without `overwriteSchema` rejects writes when the incoming DataFrame schema does not match the existing table metadata.
+
+**Fix**
+
+In both `run_create_silver_tables_databricks.py` and `create_silver_tables.py`:
+
+1. Added `DROP TABLE IF EXISTS` at the start of each run for:
+   - `silver.customers`
+   - `silver.orders`
+   - `silver.products`
+   - `silver.data_quality_report`
+
+2. Updated all Delta writes to:
+
+```python
+df.write.format("delta").mode("overwrite").option("overwriteSchema", "true").saveAsTable(...)
+```
+
+This guarantees a clean slate on re-run and allows schema changes when orchestrator logic evolves.
+
