@@ -17,3 +17,15 @@ Bronze is the raw landing layer: it copies source CSVs from the Unity Catalog vo
 **Ingestion audit log.** Every successful ingest appends one row to `bronze.ingestion_log` with `table_name`, `source_path`, `row_count`, and `ingested_at`. That log confirms what ran, when, and how many rows landed—complementing per-row metadata on the fact tables themselves.
 
 **Verified outcomes (Databricks).** Row counts match the intentionally seeded sample data: `bronze.customers` 10,010 (10,000 + 10 duplicate PK rows), `bronze.orders` 100,020 (100,000 + 20 duplicate PK rows), `bronze.products` 500. `bronze.ingestion_log` records all three loads with correct source paths and timestamps.
+
+---
+
+## Silver Layer Design
+
+Silver adds boolean `chk_*` quality flags and a row-level `quality_check_result` (`PASS` / `FAIL`) without dropping Bronze rows. Failed rows remain in `silver.customers`, `silver.orders`, and `silver.products` for audit; Gold reads only `PASS` rows.
+
+**Uniqueness flagging vs canonical survivor selection.** The uniqueness check (`chk_uniqueness_customer_id`, `chk_uniqueness_order_id`) intentionally flags **every row in a duplicate-key group** as `False`, not only the “extra” appended copy. For example, 20 duplicate `order_id` keys produce **40** uniqueness failures (both rows per key), even though the CSV only has 20 surplus rows beyond distinct keys. This makes duplicate participation visible on every affected row in the main Silver tables and in `quality_check_result` rollups.
+
+**Canonical tables resolve survivors separately.** `silver.customers_canonical` and `silver.orders_canonical` (materialized by `02_quality_uniqueness.py`) apply first-seen deduplication by `_ingest_timestamp` (then `_source_file`) and keep **one row per business key**. Gold aggregations that must avoid double-counting revenue or customers should read from these canonical tables (or equivalent deduped logic), not infer survivorship from the uniqueness flag alone. Flagging answers “did this row participate in a duplicate-key violation?”; canonical tables answer “which single row represents this key for downstream metrics?”
+
+**Verified orchestrator outcome (orders).** `silver.data_quality_report` shows **420 failed rows** out of 100,020: 100 null `customer_id` + 200 null `product_id` + 50 orphan `customer_id` + 30 orphan `product_id` + 40 uniqueness failures = 420, with no overlap on the seeded dataset.

@@ -70,3 +70,29 @@ After fixing, create debugging-notes.md at the repo root (if it doesn't exist) a
 - `src/silver/create_silver_tables.py`
 - `debugging-notes.md`
 - `ai-prompts/debugging.md` — this log entry
+
+---
+
+## Prompt: Investigate orders failed_rows=420 vs 380 upper bound
+
+**PROMPT SENT:** The final Silver data_quality_report shows orders: 420 failed out of 100,020. Investigate why failed_rows=420 is higher than expected upper bound of 380 (100+200+50+30). Check business logic, duplicate order_id in rollup, and provide per-check breakdown. Do not accept the number without explanation; fix bug if found. Log in debugging-notes.md.
+
+**AI RESPONSE SUMMARY:** Re-ran `apply_orders_checks()` locally on seed CSVs. Per-check failures: completeness 100/200, referential 50/30, uniqueness **40**, business logic **0/0/0**. Distinct FAIL rows = 420; all 420 fail exactly one check (no overlap). Root cause: the 380 bound excluded uniqueness; 20 duplicate keys produce **40** failing rows because both copies fail `chk_uniqueness_order_id`. 380 + 40 = 420. No code bug—documented in `debugging-notes.md` with Databricks SQL breakdown queries.
+
+**FILES CREATED OR CHANGED:**
+
+- `debugging-notes.md` — Issue / Investigation / Root Cause / Breakdown SQL / Fix (none required)
+- `ai-prompts/debugging.md` — this log entry
+
+---
+
+## Prompt: Investigate orders failed_rows=420 vs 380 upper bound
+
+**PROMPT SENT:** The final Silver data_quality_report shows orders: 420 failed out of 100,020. Investigate why failed_rows=420 is higher than expected upper bound of 380 (100+200+50+30). Check business logic, duplicate order_id in rollup, and provide per-check breakdown. Do not accept the number without explanation; fix bug if found. Log in debugging-notes.md.
+
+**AI RESPONSE SUMMARY:** Re-ran `apply_orders_checks()` locally on seed CSVs. Per-check failures: completeness 100/200, referential 50/30, uniqueness **40**, business logic **0/0/0**. Distinct FAIL rows = 420; all 420 fail exactly one check (no overlap). Root cause: the 380 bound excluded uniqueness; 20 duplicate keys produce **40** failing rows because both copies fail `chk_uniqueness_order_id`. 380 + 40 = 420. No code bug—documented in `debugging-notes.md` with Databricks SQL breakdown queries.
+
+**FILES CREATED OR CHANGED:**
+
+- `debugging-notes.md` — Issue / Investigation / Root Cause / Breakdown SQL / Fix (none required)
+- `ai-prompts/debugging.md` — this log entry

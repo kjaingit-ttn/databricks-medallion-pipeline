@@ -320,3 +320,40 @@ Append this verified completion to ai-prompts/silver-layer.md.
 **FILES CREATED OR CHANGED:**
 
 - `ai-prompts/silver-layer.md` — this completion entry
+
+---
+
+## Completion: Silver orchestrator orders failed_rows=420 verified (not a bug)
+
+**PROMPT SENT:** Confirmed: the orders failed_rows=420 in silver.data_quality_report is correct, not a bug. Verified via breakdown query - uniqueness check correctly flags BOTH rows in each duplicate pair (20 keys x 2 rows = 40), not just the extra copy, since canonical dedup logic (separate tables) is what actually resolves which row survives. Total: 100+200+50+30+40=420, matching exactly with no overlap.
+
+Append this verification to ai-prompts/silver-layer.md, and note in design-notes.md that uniqueness flagging intentionally marks all rows in a duplicate group, while the separate *_canonical tables handle survivor selection for Gold layer consumption.
+
+**AI RESPONSE SUMMARY:** Appended verified reconciliation of `silver.data_quality_report` orders FAIL count. Per-check breakdown on seed data: completeness 100 + 200, referential 50 + 30, uniqueness **40** (not 20), business logic 0. All 420 failing rows fail exactly one check (disjoint defect indices in generator). The 380 figure omitted uniqueness; 380 + 40 = 420. Documented uniqueness flag-vs-canonical split in `design-notes.md`.
+
+**VERIFIED BREAKDOWN (orders, `silver.orders` / orchestrator logic):**
+
+| Check | Failed rows | Notes |
+|-------|------------:|-------|
+| `chk_completeness_customer_id` | 100 | null/blank FK |
+| `chk_completeness_product_id` | 200 | null/blank FK |
+| `chk_ref_customer_exists` | 50 | orphan non-blank FK |
+| `chk_ref_product_exists` | 30 | orphan non-blank FK |
+| `chk_uniqueness_order_id` | **40** | 20 duplicate keys × 2 rows each (both flagged) |
+| `chk_biz_amount_consistency` | 0 | — |
+| `chk_biz_completed_has_payment` | 0 | — |
+| `chk_biz_positive_quantity` | 0 | — |
+| **`quality_check_result = 'FAIL'`** | **420** | 100+200+50+30+40; no overlap |
+
+**Key distinction:**
+
+| Metric | Count | Meaning |
+|--------|------:|---------|
+| Duplicate **rows** in CSV (`total − distinct`) | 20 | Extra appended rows beyond distinct `order_id` |
+| Rows failing **`chk_uniqueness_order_id`** | 40 | All participants in duplicate-key groups |
+| Expected **`failed_rows`** in `data_quality_report` | 420 | Includes uniqueness failures via orchestrator rollup |
+
+**FILES CREATED OR CHANGED:**
+
+- `ai-prompts/silver-layer.md` — this completion entry
+- `design-notes.md` — Silver uniqueness flagging vs canonical survivor selection
