@@ -29,3 +29,15 @@ Silver adds boolean `chk_*` quality flags and a row-level `quality_check_result`
 **Canonical tables resolve survivors separately.** `silver.customers_canonical` and `silver.orders_canonical` (materialized by `02_quality_uniqueness.py`) apply first-seen deduplication by `_ingest_timestamp` (then `_source_file`) and keep **one row per business key**. Gold aggregations that must avoid double-counting revenue or customers should read from these canonical tables (or equivalent deduped logic), not infer survivorship from the uniqueness flag alone. Flagging answers “did this row participate in a duplicate-key violation?”; canonical tables answer “which single row represents this key for downstream metrics?”
 
 **Verified orchestrator outcome (orders).** `silver.data_quality_report` shows **420 failed rows** out of 100,020: 100 null `customer_id` + 200 null `product_id` + 50 orphan `customer_id` + 30 orphan `product_id` + 40 uniqueness failures = 420, with no overlap on the seeded dataset.
+
+---
+
+## Gold Layer Design
+
+Gold reads PASS-quality Silver data (and canonical dedup tables for facts/dimensions subject to duplicate keys). Cancelled orders are excluded from revenue metrics; Pending and Completed count toward revenue in the implemented Gold SQL.
+
+**Canonical joins.** Fact queries join `orders_canonical` / `customers_canonical` to `silver.orders` / `silver.customers` on `order_id` or `customer_id` plus `_ingest_timestamp` and `_source_file` so the survivor row carries the orchestrator's `quality_check_result`.
+
+**Seven Gold outputs.** Three required aggregations (`sales_by_product`, `revenue_by_customer`, `customer_segmentation`) plus four value-add metrics (daily/weekly trends, revenue by category, order-status funnel, top customers by frequency). The funnel intentionally includes FAIL-quality rows to show operational status mix.
+
+**Local-first workflow.** `src/gold/create_gold_tables.py` rebuilds Silver from `data/*.csv` and prints all seven outputs before running `run_create_gold_tables_databricks.py` in the workspace.
