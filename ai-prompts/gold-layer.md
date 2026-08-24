@@ -78,3 +78,30 @@ Then create src/gold/create_gold_tables.py (local) and src/gold/run_create_gold_
 - `ai-prompts/gold-layer.md` — this log entry
 
 **DATABRICKS USAGE:** After Silver pipeline (including `run_02_quality_uniqueness_databricks.py` for canonical tables and `run_create_silver_tables_databricks.py`), paste entire `run_create_gold_tables_databricks.py` into one notebook cell.
+
+---
+
+## Completion: Gold layer verified in Databricks
+
+**PROMPT SENT:** Gold layer is fully complete and verified in Databricks - all 7 tables written with row counts exactly matching the local validation run (500, 9940, 960, 4, 10, 3, 20). No debugging needed this time since local-first testing caught issues before touching Databricks.
+
+Append this verified completion to ai-prompts/gold-layer.md, and add a "Gold Layer Design" section to design-notes.md summarizing the 3 required + 4 additional aggregations and the PASS-only + canonical-dedup filtering strategy.
+
+**AI RESPONSE SUMMARY:** Appended Databricks verification record confirming all seven Gold Delta tables match local row counts exactly. Expanded `design-notes.md` Gold Layer Design section with required vs additional aggregation inventory and PASS-only / canonical-dedup filtering strategy.
+
+**VERIFIED RESULTS (Databricks — row counts match local run):**
+
+| Gold table | Rows | Type | Status |
+|------------|-----:|------|--------|
+| `gold.sales_by_product` | 500 | **Required** | ✓ |
+| `gold.revenue_by_customer` | 9,940 | **Required** | ✓ |
+| `gold.daily_revenue_trend` | 960 | Additional | ✓ |
+| `gold.customer_segmentation` | 4 | **Required** | ✓ |
+| `gold.revenue_by_category` | 10 | Additional | ✓ |
+| `gold.order_status_funnel` | 3 | Additional | ✓ |
+| `gold.top_customers_by_frequency` | 20 | Additional | ✓ |
+
+**FILES CREATED OR CHANGED:**
+
+- `ai-prompts/gold-layer.md` — this completion entry
+- `design-notes.md` — expanded Gold Layer Design section

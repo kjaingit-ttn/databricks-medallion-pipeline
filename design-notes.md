@@ -34,10 +34,51 @@ Silver adds boolean `chk_*` quality flags and a row-level `quality_check_result`
 
 ## Gold Layer Design
 
-Gold reads PASS-quality Silver data (and canonical dedup tables for facts/dimensions subject to duplicate keys). Cancelled orders are excluded from revenue metrics; Pending and Completed count toward revenue in the implemented Gold SQL.
+Gold is the business-ready analytics layer: curated aggregations built from Silver inputs for BI and dashboard consumption. All logic lives in `src/gold/*.sql` with two runners — `create_gold_tables.py` (local, reads `data/*.csv` and reapplies Silver checks inline) and `run_create_gold_tables_databricks.py` (self-contained, reads `silver.*` tables).
 
-**Canonical joins.** Fact queries join `orders_canonical` / `customers_canonical` to `silver.orders` / `silver.customers` on `order_id` or `customer_id` plus `_ingest_timestamp` and `_source_file` so the survivor row carries the orchestrator's `quality_check_result`.
+### PASS-only + canonical-dedup filtering strategy
 
-**Seven Gold outputs.** Three required aggregations (`sales_by_product`, `revenue_by_customer`, `customer_segmentation`) plus four value-add metrics (daily/weekly trends, revenue by category, order-status funnel, top customers by frequency). The funnel intentionally includes FAIL-quality rows to show operational status mix.
+**Default rule (6 of 7 tables):** Include only rows where `quality_check_result = 'PASS'` and `UPPER(TRIM(order_status)) <> 'CANCELLED'`. Pending and Completed orders contribute to revenue metrics; Cancelled orders are excluded per `requirements-analysis.md`.
 
-**Local-first workflow.** `src/gold/create_gold_tables.py` rebuilds Silver from `data/*.csv` and prints all seven outputs before running `run_create_gold_tables_databricks.py` in the workspace.
+**Canonical dedup for facts and dimensions.** Orders and customers can contain duplicate business keys in Silver (flagged, not dropped). Gold avoids double-counting by:
+
+1. Starting from `silver.orders_canonical` / `silver.customers_canonical` (one row per `order_id` / `customer_id`, first-seen by `_ingest_timestamp`).
+2. Inner-joining to `silver.orders` / `silver.customers` on the business key **plus** `_ingest_timestamp` and `_source_file` so the canonical survivor row carries the orchestrator's `quality_check_result` and dimension attributes.
+3. Filtering to `quality_check_result = 'PASS'` on the joined Silver row.
+
+**Products** have no canonical table (no duplicate `product_id` in seed data); Gold uses `silver.products` with a PASS filter only.
+
+**Exception — order status funnel:** `gold.order_status_funnel` reads **all** `silver.orders` regardless of `quality_check_result` to show operational status volume mix (Completed / Pending / Cancelled), not clean-data revenue.
+
+### Required aggregations (assignment minimum — 3)
+
+| SQL | Gold table | Grain | Key metrics |
+|-----|------------|-------|-------------|
+| `01_sales_by_product.sql` | `gold.sales_by_product` | Product | `total_orders`, `total_revenue`, `avg_order_value`, `total_units_sold` |
+| `02_revenue_by_customer.sql` | `gold.revenue_by_customer` | Customer | `total_orders`, `total_revenue`, `avg_order_value`, `lifetime_value_actual` |
+| `04_customer_segmentation.sql` | `gold.customer_segmentation` | Segment | `segment_type` (High-Value ≥ $5k, Repeat ≥ 2 orders, One-Time = 1, Inactive = 0), `customer_count`, `avg_revenue`, `total_revenue` |
+
+### Additional value-add aggregations (4)
+
+| SQL | Gold table | Purpose |
+|-----|------------|---------|
+| `03_daily_weekly_trends.sql` | `gold.daily_revenue_trend` | Daily `order_date` + ISO `week_start` revenue/order trends |
+| `05_revenue_by_category.sql` | `gold.revenue_by_category` | Category rollup with `product_count` |
+| `06_order_status_funnel.sql` | `gold.order_status_funnel` | Status distribution with `pct_of_total` (all Silver orders) |
+| `07_top_customers_by_frequency.sql` | `gold.top_customers_by_frequency` | Top 20 customers by order count (different ranking lens than revenue) |
+
+### Verified outcomes (local + Databricks)
+
+Local-first validation via `python src/gold/create_gold_tables.py` produced row counts that matched the Databricks run exactly:
+
+| Gold table | Rows |
+|------------|-----:|
+| `gold.sales_by_product` | 500 |
+| `gold.revenue_by_customer` | 9,940 |
+| `gold.daily_revenue_trend` | 960 |
+| `gold.customer_segmentation` | 4 |
+| `gold.revenue_by_category` | 10 |
+| `gold.order_status_funnel` | 3 |
+| `gold.top_customers_by_frequency` | 20 |
+
+No debugging was required on Databricks — the local-first workflow validated all seven outputs before the workspace run.
