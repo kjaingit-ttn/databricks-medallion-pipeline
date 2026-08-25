@@ -118,3 +118,36 @@ Log this in ai-prompts/documentation.md.
 - `database/setup-notes.md` — full setup runbook
 - `ai-prompts/documentation.md` — appended this log entry
 
+---
+
+## Prompt: Complete all remaining required documentation (9 deliverables)
+
+**PROMPT SENT:** We need to complete all remaining required documentation for this project, grounded strictly in what we've actually built (do not invent numbers, steps, or claims not backed by our real implementation). Review the existing files in ai-prompts/, debugging-notes.md, design-notes.md, and the src/ folder structure first to base everything on real facts. Create/fill in all of the following:
+
+1. candidate-info.md
+2. data-model.md
+3. tool-workflow.md
+4. reflection.md
+5. final-ai-usage-summary.md
+6. README.md
+7. tool-specific/cursor-workflow/spec.md
+8. tool-specific/cursor-workflow/cursor-rules-or-instructions.md
+9. tool-specific/cursor-workflow/task-breakdown.md
+
+After creating all 9 files, append a summary entry to ai-prompts/documentation.md logging this batch documentation task.
+
+**AI RESPONSE SUMMARY:** Completed the full documentation batch grounded in verified implementation. Files 1–5 (`candidate-info.md`, `data-model.md`, `tool-workflow.md`, `reflection.md`, `final-ai-usage-summary.md`) were created in an earlier session; files 6–9 completed in this session: `README.md` (repo overview, two-file pattern, local/Databricks setup, run order, pytest); `tool-specific/cursor-workflow/spec.md` (medallion design spec); `cursor-rules-or-instructions.md` (`.cursorrules` rule-by-rule rationale); `task-breakdown.md` (phases Aug 20–25 matching `ai-prompts/` history). All counts and bug references match `debugging-notes.md`, `design-notes.md`, and verified row counts (Bronze 10,010/100,020/500; Silver 420 order FAILs; Gold 500/9,940/960/4/10/3/20; 36 pytest tests).
+
+**FILES CREATED OR CHANGED:**
+
+- `candidate-info.md` — candidate template (Kalpana Jain, ATL, 20–25 Aug 2026)
+- `data-model.md` — source schema, PK/FK, Bronze→Silver→Gold lineage
+- `tool-workflow.md` — Part A AI workflow (Cursor, context, real bug examples)
+- `reflection.md` — honest journey reflection
+- `final-ai-usage-summary.md` — executive AI usage summary
+- `README.md` — project overview and setup/runbook
+- `tool-specific/cursor-workflow/spec.md` — design specification
+- `tool-specific/cursor-workflow/cursor-rules-or-instructions.md` — `.cursorrules` documentation
+- `tool-specific/cursor-workflow/task-breakdown.md` — chronological task phases
+- `ai-prompts/documentation.md` — appended this log entry
+
