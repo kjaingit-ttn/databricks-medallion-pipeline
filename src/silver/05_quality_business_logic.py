@@ -8,17 +8,29 @@ flags and never drop Bronze rows.
 
 from __future__ import annotations
 
+import importlib.util
+from pathlib import Path
+
 from pyspark.sql import DataFrame, SparkSession
 from pyspark.sql.functions import (
     abs as spark_abs,
     col,
     current_date,
     length,
-    to_date,
     trim,
     upper,
     when,
 )
+
+_TYPE_VALIDATION_PATH = Path(__file__).resolve().parent / "03_quality_type_validation.py"
+_type_spec = importlib.util.spec_from_file_location(
+    "quality_type_validation",
+    _TYPE_VALIDATION_PATH,
+)
+if _type_spec is None or _type_spec.loader is None:
+    raise ImportError(f"Cannot load type validation module from {_TYPE_VALIDATION_PATH}")
+_type_mod = importlib.util.module_from_spec(_type_spec)
+_type_spec.loader.exec_module(_type_mod)
 
 BRONZE_ORDERS_TABLE = "bronze.orders"
 BRONZE_CUSTOMERS_TABLE = "bronze.customers"
@@ -45,11 +57,7 @@ def _is_present(column_name: str):
 
 def apply_orders_business_logic(orders_df: DataFrame) -> DataFrame:
     """Add business-logic flags for amount consistency, payment, and quantity."""
-    orders_typed = (
-        orders_df.withColumn("quantity_num", trim(col("quantity")).cast("double"))
-        .withColumn("unit_price_num", trim(col("unit_price")).cast("double"))
-        .withColumn("total_amount_num", trim(col("total_amount")).cast("double"))
-    )
+    orders_typed = _type_mod.with_orders_typed_columns(orders_df)
 
     amount_expected = col("quantity_num") * col("unit_price_num")
     amount_valid = (
@@ -85,10 +93,7 @@ def apply_orders_business_logic(orders_df: DataFrame) -> DataFrame:
 
 def apply_customers_business_logic(customers_df: DataFrame) -> DataFrame:
     """Add business-logic flag ensuring signup_date is not in the future."""
-    customers_typed = customers_df.withColumn(
-        "signup_date_dt",
-        to_date(trim(col("signup_date"))),
-    )
+    customers_typed = _type_mod.with_customers_typed_columns(customers_df)
 
     signup_not_future = (
         _is_present("signup_date")

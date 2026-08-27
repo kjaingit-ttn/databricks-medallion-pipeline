@@ -7,6 +7,9 @@ and Business Logic checks inline, and writes all rows (PASS + FAIL) to final Sil
 
 from __future__ import annotations
 
+import importlib.util
+from pathlib import Path
+
 from pyspark.sql import DataFrame, SparkSession
 from pyspark.sql.functions import (
     abs as spark_abs,
@@ -17,12 +20,21 @@ from pyspark.sql.functions import (
     current_timestamp,
     length,
     lit,
-    to_date,
     trim,
     upper,
     when,
 )
 from pyspark.sql.window import Window
+
+_TYPE_VALIDATION_PATH = Path(__file__).resolve().parent / "03_quality_type_validation.py"
+_type_spec = importlib.util.spec_from_file_location(
+    "quality_type_validation",
+    _TYPE_VALIDATION_PATH,
+)
+if _type_spec is None or _type_spec.loader is None:
+    raise ImportError(f"Cannot load type validation module from {_TYPE_VALIDATION_PATH}")
+_type_mod = importlib.util.module_from_spec(_type_spec)
+_type_spec.loader.exec_module(_type_mod)
 
 BRONZE_CUSTOMERS_TABLE = "bronze.customers"
 BRONZE_ORDERS_TABLE = "bronze.orders"
@@ -73,15 +85,14 @@ def apply_customers_checks(customers_df: DataFrame) -> DataFrame:
             col("_customer_id_occurrence_count") == 1,
         )
         .drop("_customer_id_occurrence_count")
-        .withColumn("signup_date_dt", to_date(trim(col("signup_date"))))
-        .withColumn(
-            "chk_biz_signup_not_future",
-            _is_present("signup_date")
-            & col("signup_date_dt").isNotNull()
-            & (col("signup_date_dt") <= current_date()),
-        )
-        .drop("signup_date_dt")
     )
+    customers_typed = _type_mod.with_customers_typed_columns(customers_checked)
+    customers_checked = customers_typed.withColumn(
+        "chk_biz_signup_not_future",
+        _type_mod._is_present("signup_date")
+        & col("signup_date_dt").isNotNull()
+        & (col("signup_date_dt") <= current_date()),
+    ).drop("customer_id_int", "signup_date_dt", "lifetime_value_dbl")
 
     return customers_checked.withColumn(
         "quality_check_result",
@@ -113,11 +124,7 @@ def apply_orders_checks(
         .distinct()
     )
 
-    typed = (
-        orders_df.withColumn("quantity_num", trim(col("quantity")).cast("double"))
-        .withColumn("unit_price_num", trim(col("unit_price")).cast("double"))
-        .withColumn("total_amount_num", trim(col("total_amount")).cast("double"))
-    )
+    typed = _type_mod.with_orders_typed_columns(orders_df)
 
     joined = (
         typed.join(
@@ -174,7 +181,18 @@ def apply_orders_checks(
             & col("quantity_num").isNotNull()
             & (col("quantity_num") > 0),
         )
-        .drop("customer_id_lkp", "product_id_lkp", "quantity_num", "unit_price_num", "total_amount_num")
+        .drop(
+            "customer_id_lkp",
+            "product_id_lkp",
+            "order_id_int",
+            "customer_id_int",
+            "product_id_int",
+            "order_date_dt",
+            "quantity_num",
+            "unit_price_num",
+            "total_amount_num",
+            "payment_date_dt",
+        )
     )
 
     return orders_checked.withColumn(
@@ -195,10 +213,7 @@ def apply_orders_checks(
 
 def apply_products_checks(products_df: DataFrame) -> DataFrame:
     """Apply product sanity checks and final PASS/FAIL status."""
-    typed = (
-        products_df.withColumn("price_num", trim(col("price")).cast("double"))
-        .withColumn("cost_num", trim(col("cost")).cast("double"))
-    )
+    typed = _type_mod.with_products_typed_columns(products_df)
 
     checked = typed.withColumn(
         "chk_biz_positive_price",
@@ -208,7 +223,13 @@ def apply_products_checks(products_df: DataFrame) -> DataFrame:
         & col("cost_num").isNotNull()
         & (col("price_num") > 0)
         & (col("cost_num") > 0),
-    ).drop("price_num", "cost_num")
+    ).drop(
+        "product_id_int",
+        "price_num",
+        "cost_num",
+        "stock_quantity_int",
+        "reorder_level_int",
+    )
 
     return checked.withColumn(
         "quality_check_result",

@@ -151,3 +151,56 @@ After creating all 9 files, append a summary entry to ai-prompts/documentation.m
 - `tool-specific/cursor-workflow/task-breakdown.md` — chronological task phases
 - `ai-prompts/documentation.md` — appended this log entry
 
+---
+
+## Prompt: Close 3 assignment structure gaps (DQ strategy, type validation, debugging log)
+
+**PROMPT SENT:** Close 3 gaps identified against the assignment's required structure:
+
+1. Fill in `data-quality-strategy.md` using the template: Quality Checks Overview with subsections per check (Completeness, Uniqueness, Referential Integrity, Business Logic) covering What/How/Threshold/Result, Quality Metrics Report section referencing real `silver.data_quality_report` numbers (customers 70 failed/10010, orders 420 failed/100020, products 0 failed/500), and Sample Data Quality Issues section listing exact intentional defects.
+
+2. Create `src/silver/03_quality_type_validation.py` as a standalone reusable module that casts bronze string columns to proper types and flags cast failures as `chk_type_*` columns — extract logic from inline casts elsewhere, don't duplicate silently.
+
+3. Create `ai-prompts/debugging.md` consolidating all real debugging prompts and fixes (UC `input_file_name`, `__file__`, temp-view restriction, `DELTA_METADATA_MISMATCH`, orders 420 investigation).
+
+Log this cleanup in `ai-prompts/documentation.md`.
+
+**AI RESPONSE SUMMARY:** Created `data-quality-strategy.md` with four check categories plus type-validation supporting module, verified `data_quality_report` metrics, and intentional defect table. Added `src/silver/03_quality_type_validation.py` with `with_*_typed_columns` helpers and `apply_*_type_validation` functions; refactored `05_quality_business_logic.py` and `create_silver_tables.py` to import cast helpers from module 03 (no silent duplication). Consolidated `ai-prompts/debugging.md` into six standard-format entries including previously missing temp-view fix; removed duplicate 420-investigation entry. All 36 pytest tests still pass.
+
+**FILES CREATED OR CHANGED:**
+
+- `data-quality-strategy.md` — quality strategy document
+- `src/silver/03_quality_type_validation.py` — type validation module
+- `src/silver/05_quality_business_logic.py` — uses type module cast helpers
+- `src/silver/create_silver_tables.py` — uses type module cast helpers
+- `ai-prompts/debugging.md` — consolidated debugging prompt history
+- `ai-prompts/documentation.md` — this log entry
+
+---
+
+## Prompt: Add .gitignore and untrack __pycache__ / .pyc files
+
+**PROMPT SENT:** `__pycache__` directories and `.pyc` files are being tracked by git, which is incorrect. Create a `.gitignore` at the repo root with standard Python ignores (`__pycache__/`, `*.pyc`, `.pytest_cache/`, and other standard Python/PySpark temp files), then remove all currently-tracked `__pycache__` files from git tracking (but keep them on disk) using `git rm -r --cached`.
+
+**AI RESPONSE SUMMARY:** Created root `.gitignore` with standard Python bytecode, pytest, virtualenv, Spark local temp (`spark-warehouse/`, `metastore_db/`), IDE, and OS ignores. Ran `git rm -r --cached` on `src/bronze/__pycache__`, `src/silver/__pycache__`, and `tests/__pycache__` (11 `.pyc` files removed from index; files remain on disk).
+
+**FILES CREATED OR CHANGED:**
+
+- `.gitignore` — Python/PySpark ignore rules
+- Git index — 11 tracked `.pyc` files untracked via `git rm --cached`
+- `ai-prompts/documentation.md` — this log entry
+
+---
+
+## Prompt: Add .gitignore and untrack __pycache__ / .pyc files
+
+**PROMPT SENT:** `__pycache__` directories and `.pyc` files are being tracked by git, which is incorrect. Create a `.gitignore` at the repo root with standard Python ignores (`__pycache__/`, `*.pyc`, `.pytest_cache/`, and other standard Python/PySpark temp files), then remove all currently-tracked `__pycache__` files from git tracking (but keep them on disk) using `git rm -r --cached`.
+
+**AI RESPONSE SUMMARY:** Created root `.gitignore` with standard Python bytecode, pytest, virtualenv, Spark local temp (`spark-warehouse/`, `metastore_db/`), IDE, and OS ignores. Ran `git rm -r --cached` on `src/bronze/__pycache__`, `src/silver/__pycache__`, and `tests/__pycache__` (11 `.pyc` files removed from index; files remain on disk).
+
+**FILES CREATED OR CHANGED:**
+
+- `.gitignore` — Python/PySpark ignore rules
+- Git index — 11 tracked `.pyc` files untracked via `git rm --cached`
+- `ai-prompts/documentation.md` — this log entry
+
