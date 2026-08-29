@@ -46,3 +46,33 @@ Log this in ai-prompts/dashboard.md.
 - `src/dashboard/dashboard_queries.sql` — eight dashboard SQL queries with tile/chart comments
 - `src/dashboard/DASHBOARD_GUIDE.md` — manual Databricks SQL Dashboard build guide
 - `ai-prompts/dashboard.md` — created; this log entry
+
+---
+
+## Prompt: Export Lakeview dashboard JSON via Databricks CLI
+
+**PROMPT SENT:** Try exporting the actual Lakeview dashboard definition as JSON using the Databricks CLI (`databricks lakeview list`, then `databricks lakeview get <dashboard-id>`). Save to `src/dashboard/exported_dashboard.json` if successful; otherwise note in `DASHBOARD_GUIDE.md` and confirm PDF/screenshot as practical alternative.
+
+**AI RESPONSE SUMMARY:** Verified Databricks CLI **v1.12.1** supports `lakeview list`, `get`, and `get-published` with `-o json`. `databricks lakeview list` failed with **Invalid access token** (expired PAT on profile DEFAULT) — not a CLI version gap. No `exported_dashboard.json` created. Added **Part 6** to `DASHBOARD_GUIDE.md` with re-auth steps, export commands, attempt results, and PDF/screenshot fallback.
+
+**FILES CREATED OR CHANGED:**
+
+- `src/dashboard/DASHBOARD_GUIDE.md` — Part 6: JSON export vs PDF alternative
+- `ai-prompts/dashboard.md` — this log entry
+
+---
+
+## Prompt: Final dashboard artifacts and completion documentation
+
+**PROMPT SENT:** User added final dashboard artifacts to `src/dashboard/`: `dashboard-export.pdf` and `dashboard-screenshot.png` (manual export from Databricks). Update `DASHBOARD_GUIDE.md` to reference these files and confirm the dashboard **Revenue & Customer Performance Dashboard** was fully built in Databricks using AI/BI Genie, covering all 7 visualizations (3 required + 4 additional) with global filters (Order Status, Category, Segment Type, Revenue Bucket, Product Name) wired to relevant tiles. Log in `ai-prompts/dashboard.md`.
+
+**AI RESPONSE SUMMARY:** Renamed on-disk artifacts to `dashboard-export.pdf` and `dashboard-screenshot.png` for consistent paths. Added **Completed dashboard** section to `DASHBOARD_GUIDE.md` with dashboard name, AI/BI Genie build confirmation, 7-visualization inventory, five global filters table, and artifact links. Updated Parts 1, 4, 5, and 6 to reflect the published deliverable.
+
+**FILES CREATED OR CHANGED:**
+
+- `src/dashboard/dashboard-export.pdf` — renamed from manual PDF export
+- `src/dashboard/dashboard-screenshot.png` — renamed from manual screenshot
+- `src/dashboard/DASHBOARD_GUIDE.md` — completion section, filters, artifact references
+- `ai-prompts/dashboard.md` — this log entry
+
+

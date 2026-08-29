@@ -1,6 +1,41 @@
 # Databricks SQL Dashboard Guide
 
-Step-by-step instructions for building the e-commerce sales dashboard manually in the **Databricks SQL Editor** and **AI/BI Dashboards** UI. Queries live in `src/dashboard/dashboard_queries.sql`.
+Step-by-step instructions for building the e-commerce sales dashboard in **Databricks AI/BI Dashboards** (Lakeview / Genie). SQL query definitions live in `src/dashboard/dashboard_queries.sql`.
+
+## Completed dashboard (deliverable)
+
+| Item | Detail |
+|------|--------|
+| **Dashboard name** | **Revenue & Customer Performance Dashboard** |
+| **Built in** | Databricks workspace using **AI/BI Genie** (Lakeview dashboards) |
+| **Status** | Fully built and published |
+| **Visualizations** | **7** — 3 required + 4 additional (see table below) |
+| **Global filters** | Order Status, Category, Segment Type, Revenue Bucket, Product Name — wired to relevant tiles |
+
+### Final artifacts (manual export)
+
+JSON export was not available from the Databricks UI; the dashboard was exported manually and committed to git:
+
+| File | Description |
+|------|-------------|
+| [`dashboard-export.pdf`](dashboard-export.pdf) | Full dashboard PDF export from Databricks |
+| [`dashboard-screenshot.png`](dashboard-screenshot.png) | Screenshot of the live dashboard canvas |
+
+These files are the **submission deliverables** alongside `dashboard_queries.sql` and this guide. CLI JSON export (`databricks lakeview get`) remains optional when a valid workspace token is available (see Part 6).
+
+### Visualization inventory (built dashboard)
+
+| # | Visualization | Chart type | Source | Assignment |
+|---|---------------|------------|--------|------------|
+| 1 | Top 10 Products by Revenue | Bar | `gold.sales_by_product` | **Required** |
+| 2 | Customer Revenue Distribution | Histogram | `gold.revenue_by_customer` | **Required** |
+| 3 | Customer Segmentation | Pie | `gold.customer_segmentation` | **Required** |
+| 4 | Revenue Trend Over Time | Line | `gold.daily_revenue_trend` | Additional |
+| 5 | Revenue by Category | Bar | `gold.revenue_by_category` | Additional |
+| 6 | Order Status Funnel | Pie / Bar | `gold.order_status_funnel` | Additional |
+| 7 | Top 10 Customers by Order Frequency | Bar | `gold.top_customers_by_frequency` | Additional |
+
+> **Note:** `dashboard_queries.sql` also includes a **Data Quality Health** table query (Tile 5) for `silver.data_quality_report`. That query supports pipeline monitoring but is not counted among the seven stakeholder-facing visualizations in the published dashboard. See Part 2, Tile 5, if you want to add it later.
 
 ## Prerequisites
 
@@ -13,9 +48,9 @@ Step-by-step instructions for building the e-commerce sales dashboard manually i
 
 ## Part 1: Create the dashboard shell
 
-1. Open **Databricks** → **SQL** → **Dashboards**.
-2. Click **Create dashboard**.
-3. Name it **E-Commerce Sales — Medallion Pipeline** (or your preferred title).
+1. Open **Databricks** → **SQL** → **Dashboards** (AI/BI Lakeview).
+2. Click **Create dashboard** (or use **AI/BI Genie** to assist with layout and visualization wiring).
+3. Name it **Revenue & Customer Performance Dashboard**.
 4. Set the default warehouse to the SQL warehouse you use for Gold queries.
 
 ---
@@ -169,7 +204,17 @@ Shows operational mix across **all** Silver orders (includes FAIL-quality rows b
 
 ## Part 4: Dashboard-level filters
 
-### Date range (recommended)
+The published **Revenue & Customer Performance Dashboard** uses **five global filters**, each bound to the tiles where the underlying Gold/Silver columns appear:
+
+| Global filter | Filter type | Bound tiles | Column / field |
+|---------------|-------------|-------------|----------------|
+| **Order Status** | Multi-select | Tile 7 (Order Status Funnel); cross-filters where `order_status` is available | `order_status` |
+| **Category** | Multi-select | Tile 6 (Revenue by Category); Tile 1 (Top Products) when category is exposed in the viz dataset | `category` |
+| **Segment Type** | Multi-select | Tile 3 (Customer Segmentation) | `segment_type` |
+| **Revenue Bucket** | Multi-select or range | Tile 2 (Customer Revenue Distribution) | `total_revenue` (histogram bucket / range) |
+| **Product Name** | Multi-select | Tile 1 (Top 10 Products by Revenue) | `product_name` |
+
+### Optional: date range filter
 
 | Setting | Value |
 |---------|--------|
@@ -177,34 +222,22 @@ Shows operational mix across **all** Silver orders (includes FAIL-quality rows b
 | **Column** | `order_date` |
 | **Apply to** | **Tile 4** (`gold.daily_revenue_trend`) |
 
-Tiles **1, 6, and 8** do not expose `order_date` in Gold. To make date filters affect those tiles, you would need parameterized SQL over `silver.orders` / canonical joins — out of scope for the current pre-aggregated Gold tables.
+Tiles **1, 6, and 8** use pre-aggregated Gold snapshots without `order_date`. To make a date filter affect those tiles, extend queries with parameterized SQL over `silver.orders` / canonical joins — out of scope for the current pre-aggregated Gold tables.
 
-### Category filter (optional)
+### Legacy / build-time filter notes (optional tiles)
 
-| Setting | Value |
-|---------|--------|
-| **Filter type** | Multi-select |
-| **Column** | `category` |
-| **Apply to** | **Tile 6** (`gold.revenue_by_category`) |
-
-If Tile 1 query is extended to include `category` from `gold.sales_by_product`, bind the same filter to Tile 1.
-
-### Segment filter (optional)
-
-| Setting | Value |
-|---------|--------|
-| **Filter type** | Multi-select |
-| **Column** | `segment_type` |
-| **Apply to** | **Tile 3** |
+If you add the Data Quality table (Tile 5 in `dashboard_queries.sql`), it does not participate in the five global filters above — it reflects the latest `silver.data_quality_report` snapshot.
 
 ---
 
 ## Part 5: Publish and validate
 
-1. **Refresh** each visualization and confirm row counts match expectations (Tile 5: 3 Silver entities; Tile 3: 4 segments; Tile 7: 3 statuses).
+1. **Refresh** each visualization and confirm row counts match expectations (Tile 3: 4 segments; Tile 7: 3 order statuses; Tile 6: 10 categories).
 2. Spot-check Tile 1 top product and Tile 8 #1 customer against local Gold validation output.
-3. Click **Publish** (or **Share**) and grant view access to stakeholders.
-4. Optionally schedule a **warehouse refresh** or pipeline job before dashboard review meetings.
+3. Verify all **five global filters** slice the expected tiles (Order Status, Category, Segment Type, Revenue Bucket, Product Name).
+4. Click **Publish** (or **Share**) and grant view access to stakeholders.
+5. Export deliverables: **PDF** → `dashboard-export.pdf`; **screenshot** → `dashboard-screenshot.png` (see Completed dashboard section above).
+6. Optionally schedule a **warehouse refresh** or pipeline job before dashboard review meetings.
 
 ---
 
@@ -222,3 +255,76 @@ If Tile 1 query is extended to include `category` from `gold.sales_by_product`, 
 | 8 | `gold.top_customers_by_frequency` | Additional |
 
 All Gold revenue metrics use **PASS-quality, non-Cancelled** orders with canonical dedup (see `design-notes.md` — Gold Layer Design).
+
+---
+
+## Part 6: Export dashboard definition (JSON vs PDF)
+
+The Databricks **UI** typically offers **PDF** export for sharing a rendered snapshot. For version control and reproducibility, prefer exporting the **Lakeview dashboard definition as JSON** via the official Databricks CLI when your workspace token is valid.
+
+### CLI support (verified locally)
+
+**Installed version:** Databricks CLI **v1.12.1** (WinGet / official standalone CLI).
+
+This version includes the `lakeview` command group with `list`, `get`, and `get-published`. JSON output is supported via the global `-o json` flag.
+
+### Export workflow
+
+1. **Re-authenticate** if the stored PAT has expired:
+
+   ```powershell
+   databricks auth login --host https://<your-workspace>.cloud.databricks.com
+   ```
+
+   Or refresh the token in `~/.databrickscfg` for profile `DEFAULT`.
+
+2. **List dashboards** and note the UUID:
+
+   ```powershell
+   databricks lakeview list -o json
+   ```
+
+3. **Export draft definition** (recommended while iterating):
+
+   ```powershell
+   databricks lakeview get <dashboard-id> -o json > src/dashboard/exported_dashboard.json
+   ```
+
+4. **Export published definition** (after you click **Publish** in the UI):
+
+   ```powershell
+   databricks lakeview get-published <dashboard-id> -o json > src/dashboard/exported_dashboard_published.json
+   ```
+
+   Use `get` for the editable draft; use `get-published` for the stakeholder-facing published version.
+
+### Attempt on this project (Aug 2026)
+
+Commands were run from the project root:
+
+```powershell
+databricks --version          # Databricks CLI v1.12.1
+databricks lakeview list      # Failed: Invalid access token (profile DEFAULT)
+```
+
+**Result:** JSON export was **not completed** — the workspace PAT in `~/.databrickscfg` is expired or invalid, not a CLI version limitation. `src/dashboard/exported_dashboard.json` was **not** created (no fabricated placeholder).
+
+**After re-auth**, re-run the list/get commands above and commit `exported_dashboard.json` if you want the dashboard definition in git.
+
+### Practical alternative: PDF / screenshot export (used for this project)
+
+JSON export was not available from the Databricks UI and CLI export failed due to an expired PAT (see below). The **Revenue & Customer Performance Dashboard** was exported manually:
+
+| Artifact | Path |
+|----------|------|
+| PDF export | `src/dashboard/dashboard-export.pdf` |
+| Screenshot | `src/dashboard/dashboard-screenshot.png` |
+
+To reproduce:
+
+1. Open the dashboard in **Databricks SQL → Dashboards**.
+2. Use the UI **Export → PDF** (saved as `dashboard-export.pdf`).
+3. Capture a canvas screenshot (saved as `dashboard-screenshot.png`).
+
+The **query source of truth** for rebuilding the dashboard remains `src/dashboard/dashboard_queries.sql` plus the tile configuration in Parts 2–4 above. PDF/screenshot captures the **visual deliverable**; JSON export captures the **machine-readable definition** when CLI auth works.
+

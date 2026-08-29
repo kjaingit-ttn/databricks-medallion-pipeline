@@ -192,15 +192,28 @@ Log this cleanup in `ai-prompts/documentation.md`.
 
 ---
 
-## Prompt: Add .gitignore and untrack __pycache__ / .pyc files
+## Prompt: Export Lakeview dashboard JSON via Databricks CLI
 
-**PROMPT SENT:** `__pycache__` directories and `.pyc` files are being tracked by git, which is incorrect. Create a `.gitignore` at the repo root with standard Python ignores (`__pycache__/`, `*.pyc`, `.pytest_cache/`, and other standard Python/PySpark temp files), then remove all currently-tracked `__pycache__` files from git tracking (but keep them on disk) using `git rm -r --cached`.
+**PROMPT SENT:** Try exporting Lakeview dashboard definition as JSON via `databricks lakeview list` and `databricks lakeview get <dashboard-id>`. Save to `src/dashboard/exported_dashboard.json` or document PDF fallback in `DASHBOARD_GUIDE.md`.
 
-**AI RESPONSE SUMMARY:** Created root `.gitignore` with standard Python bytecode, pytest, virtualenv, Spark local temp (`spark-warehouse/`, `metastore_db/`), IDE, and OS ignores. Ran `git rm -r --cached` on `src/bronze/__pycache__`, `src/silver/__pycache__`, and `tests/__pycache__` (11 `.pyc` files removed from index; files remain on disk).
+**AI RESPONSE SUMMARY:** CLI v1.12.1 supports Lakeview JSON export (`-o json`). List command failed: invalid/expired PAT. Updated `DASHBOARD_GUIDE.md` Part 6 with export workflow and PDF/screenshot alternative; no JSON file written.
 
 **FILES CREATED OR CHANGED:**
 
-- `.gitignore` — Python/PySpark ignore rules
-- Git index — 11 tracked `.pyc` files untracked via `git rm --cached`
+- `src/dashboard/DASHBOARD_GUIDE.md` — Part 6 export documentation
 - `ai-prompts/documentation.md` — this log entry
+
+---
+
+## Prompt: Final dashboard artifacts and completion documentation
+
+**PROMPT SENT:** User added `dashboard-export.pdf` and `dashboard-screenshot.png` to `src/dashboard/`. Update `DASHBOARD_GUIDE.md` to reference artifacts and confirm **Revenue & Customer Performance Dashboard** built in Databricks via AI/BI Genie with 7 visualizations and five global filters.
+
+**AI RESPONSE SUMMARY:** Updated `DASHBOARD_GUIDE.md` with completed-dashboard section, artifact links, visualization inventory, and global filter wiring. Standardized artifact filenames. Logged in `ai-prompts/dashboard.md`.
+
+**FILES CREATED OR CHANGED:**
+
+- `src/dashboard/dashboard-export.pdf`, `dashboard-screenshot.png` — final deliverable artifacts
+- `src/dashboard/DASHBOARD_GUIDE.md` — completion documentation
+- `ai-prompts/dashboard.md`, `ai-prompts/documentation.md` — log entries
 
